@@ -7,5 +7,6 @@ services:
     restart: always
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB:  ${POSTGRES_DB:-car_rent}
     ports:
       - "5432:5432"

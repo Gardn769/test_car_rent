@@ -1,5 +1,5 @@
 import { ReportDto } from './dto/report.dto';
-import { RentDto } from './dto/rent.dto';
+import { RentDto, RentDateDto } from './dto/rent.dto';
 import { RentService } from './rent.service';
 import { Body, Controller, Get, Post, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -18,16 +18,15 @@ export class RentController {
   @ApiOperation({
     summary: 'Производится расчёт стоимости аренды автомобиля за период',
   })
-  @Get('checkCostRent/:days')
-  @ApiParam({ name: 'days', type: number })
-  async checkCostRent(@Param('days') days: number): Promise<number> {
-    return await this.rentService.checkCostRent(3);
+  @Post('checkCostRent')
+  async checkCostRent(@Body() rent: RentDateDto): Promise<number> {
+    return await this.rentService.checkCostRent(rent);
   }
 
   @ApiOperation({ summary: 'Создание сессии аренды автомобиля' })
   @Post('rentCar')
   rentCar(@Body() rent: RentDto): void {
-    // this.rentService.rentCar();
+    // this.rentService.rentCar(rent);
   }
 
   @ApiOperation({

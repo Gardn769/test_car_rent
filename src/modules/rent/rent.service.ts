@@ -1,13 +1,17 @@
-import { ReportDto } from './dto/report.dto';
-import { RentDto } from './dto/rent.dto';
+import { tariffs } from './../../config/tariffs';
+import { ConfigService } from '@nestjs/config';
+import { ReportCarDto, ReportDto } from './dto/report.dto';
+import { RentDto, RentDateDto } from './dto/rent.dto';
 import { DatabaseService } from './../../database/database.service';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { DateTime } from 'luxon';
 
 @Injectable()
 export class RentService {
-  constructor(private db: DatabaseService) {}
+  private readonly logger = new Logger(RentService.name);
+
+  constructor(private db: DatabaseService, private config: ConfigService) {}
 
   async checkCar(idCar: number): Promise<boolean> {
     const { rows, rowCount } = await this.db.query(
@@ -35,53 +39,52 @@ export class RentService {
     return Number(2) > 3;
   }
 
-  checkCostRent(daysRent: number): number {
-    //   return this.appService.getHello();
-    // if (startDate.getDay() > 5) {
-    //   throw new ConflictException('Начало аренды в выходной!');
-    // }
-    // if (endDate.getDay() > 5) {
-    //   throw new ConflictException('Окончание аренды в выходной!');
-    // }
-    // let daysRent = endDate.getDay() - startDate.getDay();
-    // let daysRent = 30;
+  checkCostRent(days: RentDateDto): number {
+    // return this.appService.getHello();
+    console.log(days.startDate);
+    const startDate = Datetime.frodays.startDate;
+    if (startDate.getDay() > 5) {
+      throw new ConflictException('Начало аренды в выходной!');
+    }
+    if (days.endDate.getDay() > 5) {
+      throw new ConflictException('Окончание аренды в выходной!');
+    }
+    let daysRent = days.endDate.getDay() - days.startDate.getDay();
     if (daysRent > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
     }
-    let costRent = 0;
-    if (daysRent >= 4) {
+    const tariffs = this.config.getOrThrow('tariffs');
+    if (daysRent > 17) {
+      daysRent -= 17;
+      return (
+        tariffs.baseRate * 4 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * 5 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 2) * 8 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 3) * daysRent
+      );
+    }
+    if (daysRent > 10) {
+      daysRent -= 9;
+      return (
+        tariffs.baseRate * 4 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * 5 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 2) * daysRent
+      );
+    }
+    if (daysRent > 5) {
       daysRent -= 4;
-      costRent += 4 * 1000;
-    } else {
-      costRent += daysRent * 1000;
-      daysRent = 0;
+      return (
+        tariffs.baseRate * 4 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * daysRent
+      );
     }
-
-    if (daysRent >= 5) {
-      daysRent -= 5;
-      costRent += 5 * 1000;
-    } else {
-      costRent += daysRent * 1000;
-      daysRent = 0;
-    }
-    if (daysRent >= 6) {
-      daysRent -= 6;
-      costRent += 6 * 1000;
-    } else {
-      costRent += daysRent * 1000;
-      daysRent = 0;
-    }
-    if (daysRent >= 8) {
-      daysRent -= 8;
-      costRent += 8 * 1000;
-    } else {
-      costRent += daysRent * 1000;
-      daysRent = 0;
-    }
-    return costRent;
+    return tariffs.baseRate * daysRent;
   }
 
   async rentCar(rent: RentDto): Promise<void> {
+    const start_date: DateTime = DateTime.fromISO(rent.startDate);
+    const end_date: DateTime = DateTime.fromISO(rent.endDate);
+
     if (rent.startDate.getDay() > 5) {
       throw new ConflictException('Начало аренды в выходной!');
     }
@@ -91,86 +94,44 @@ export class RentService {
     if (rent.endDate.getDay() - rent.startDate.getDay() > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
     }
-    //   await this.db.query(
-    //     'INSERT INTO car_rentals (car_id, client_id, start_date, end_date) VALUES ($1, $2, $3, $4)',
-    //     [rent.idCar, rent.idClient, rent.startDate, rent.endDate],
-    //   );
+    await this.db.query(
+      'INSERT INTO car_rent (car_id, client_id, start_date, end_date) VALUES ($1, $2, $3, $4)',
+      [rent.idCar, rent.idClient, rent.startDate, rent.endDate],
+    );
   }
 
   async report(): Promise<ReportDto> {
-    //   return this.appService.getHello();
-    const i1 = DateTime.fromISO('1982-05-25T09:45'),
-      i2 = DateTime.fromISO('1983-10-14T10:30');
-    // i2.diff(i1).toObject(); //=> { milliseconds: 43807500000 }
-    // i2.diff(i1, 'hours').toObject(); //=> { hours: 12168.75 }
-    console.log(i1.diff(i2, 'days').toObject()); //=> { hours: 12168.75 }
-    // i2.diff(i1, ['months', 'days']).toObject(); //=> { months: 16, days: 19.03125 }
-    // i2.diff(i1, ['months', 'days', 'hours']).toObject(); //=> { months: 16, days: 19, hours: 0.75 }
+    // const i1 = DateTime.fromISO('1982-05-25T09:45');
+    // const i2 = DateTime.fromISO('1983-10-14T10:30');
+    // console.log(i1.diff(i2, 'days').toObject());
+    // const { rows } = await this.db.query(
+    //   'SELECT car_id, COUNT(*) AS rentCount FROM car_rentals GROUP BY car_id',
+    // );
+    // return <ReportDto>(<unknown>rows);
     const { rows } = await this.db.query(
-      'SELECT car_id, COUNT(*) AS rentCount FROM car_rentals GROUP BY car_id',
+      'SELECT * FROM car_rentals WHERE start_date >  CURRENT_DATE - 30',
     );
-    return <ReportDto>(<unknown>rows);
+
+    const workload: any = {};
+    for (const row of rows) {
+      const start_date: DateTime = DateTime.fromJSDate(row.start_date);
+      const end_date: DateTime = DateTime.fromJSDate(row.end_date);
+
+      const { days } = end_date.diff(start_date, 'days').toObject();
+      if (!workload[row.car_id]) {
+        workload[row.car_id] = 0;
+      }
+      workload[row.car_id] += Number(days);
+    }
+
+    const report: ReportCarDto[] = [];
+    for (const reportKey in workload) {
+      // report.push({
+      //   // carId: +reportKey,
+      //   percentWorkload: workload[reportKey] / 30,
+      // });
+    }
+
+    return <ReportDto>{ report };
   }
 }
-
-// constructor(
-//   private db: DatabaseService,
-//   private config: ConfigService,
-// ) {}
-
-// async checkCar(idCar: number): Promise<boolean> {
-//   const { rows } = await this.db.query(
-//     'SELECT end_date FROM car_rentals WHERE car_id = $1 ORDER BY end_date DESC LIMIT 1',
-//     [String(idCar)],
-//   );
-
-//   const end_date: DateTime = DateTime.fromISO(rows[0].end_date)
-//   const { days } = end_date.diffNow('day').toObject()
-
-//   return Number(days) > 3
-
-// }
-
-// cost(days: number): number {
-//   const defPrice: number = this.config.getOrThrow('rentPrice');
-//   if (days > 18) {
-//     days -= 15;
-//     return defPrice * 4 +
-//       (defPrice - defPrice * 0.05) * 5 +
-//       (defPrice - defPrice * 0.10) * 6 +
-//       (defPrice - defPrice * 0.15) * days;
-//   }
-//   if (days > 10) {
-//     days -= 9;
-//     return defPrice * 4 +
-//       (defPrice - defPrice * 0.05) * 5 +
-//       (defPrice - defPrice * 0.10) * days;
-//   }
-//   if (days > 5) {
-//     days -= 4;
-//     return defPrice * 4 +
-//       (defPrice - defPrice * 0.05) * days;
-//   }
-//   return defPrice * days;
-// }
-
-// async rentCar(rent: RentDto): Promise<void> {
-//   if (rent.startDate.getDay() > 5) {
-//     throw new ConflictException('Начало аренды в выходной!');
-//   }
-//   if (rent.endDate.getDay() > 5) {
-//     throw new ConflictException('Окончание аренды в выходной!');
-//   }
-
-//   await this.db.query(
-//     'INSERT INTO car_rentals (car_id, client_id, start_date, end_date) VALUES ($1, $2, $3, $4)',
-//     [rent.idCar, rent.idClient, rent.startDate, rent.endDate],
-//   );
-// }
-
-// async averageLoadReport(): Promise<ReportDto> {
-//   const { rows } = await this.db.query(
-//     'SELECT car_id, COUNT(*) AS rentCount FROM car_rentals GROUP BY car_id',
-//   );
-//   return <ReportDto><unknown>rows;
-// }

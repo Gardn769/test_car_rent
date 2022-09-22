@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class ReportCarDto {
+export class ReportCarDto {
   @ApiProperty()
   id!: number;
 

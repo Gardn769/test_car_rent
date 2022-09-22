@@ -22,8 +22,8 @@ export class DatabaseService {
     return this.pool.query(text, params);
   }
 
-  createTable() {
-    const createTableText = `CREATE TABLE CAR_RENT IF NOT EXISTS users (  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), );`;
-    this.query(createTableText);
-  }
+  // createTable() {
+  //   const createTableText = `CREATE TABLE CAR_RENT IF NOT EXISTS users (  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), );`;
+  //   this.query(createTableText);
+  // }
 }
