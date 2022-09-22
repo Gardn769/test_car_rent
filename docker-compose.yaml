@@ -1,32 +1,11 @@
 version: '3.8'
 
 services:
-  rabbit-mq:
-    container_name: rabbit-mq
-    image: library/rabbitmq:3.8.3-management
-    hostname: rabbit.dev
+  db:
+    container_name: pg_database
+    image: postgres
     restart: always
-    env_file:
-      - docker.env
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-radmin}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-123456}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
-      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-SWQOKODSQALRPCLNMEQG}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "4369:4369"
-      - "5672:5672"
-      - "15672:15672"
-      - "25672:25672"
-      - "35197:35197"
-
-  selenium:
-    container_name: selenium
-    image: selenium/standalone-firefox:4.0.0-alpha-7-prerelease-20200921
-    restart: always
-    build:
-      context: .
-      shm_size: '2gb'
-    shm_size: '2gb'
-    ports:
-      - "4444:4444"
+      - "5432:5432"

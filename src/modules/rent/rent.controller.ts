@@ -9,8 +9,8 @@ export class RentController {
 
   @ApiOperation({ summary: 'Проверка доступен ли автомобиль' })
   @Get('checkCar')
-  checkCar(): Promise<string> {
-    return this.rentService.checkCar(2);
+  checkCar(): void {
+    // return this.rentService.checkCar(2);
   }
 
   @ApiOperation({
@@ -18,13 +18,13 @@ export class RentController {
   })
   @Get('checkCostRent')
   checkCostRent(): void {
-    this.rentService.checkCostRent();
+    // this.rentService.checkCostRent(3);
   }
 
   @ApiOperation({ summary: 'Создание сессии аренды автомобиля' })
   @Post('rentCar')
   rentCar(): void {
-    this.rentService.rentCar();
+    // this.rentService.rentCar();
   }
 
   @ApiOperation({
@@ -33,6 +33,6 @@ export class RentController {
   })
   @Get('report')
   report(): void {
-    this.rentService.checkCostRent();
+    this.rentService.report();
   }
 }
