@@ -1,3 +1,4 @@
+import { ReportDto } from './dto/report.dto';
 import { RentDto } from './dto/rent.dto';
 import { DatabaseService } from './../../database/database.service';
 import { ConflictException, Injectable } from '@nestjs/common';
@@ -9,7 +10,7 @@ export class RentService {
   constructor(private db: DatabaseService) {}
 
   async checkCar(idCar: number): Promise<boolean> {
-    const { rows } = await this.db.query(
+    const { rows, rowCount } = await this.db.query(
       'SELECT end_date FROM car_rent WHERE car_id = $1 ORDER BY end_date DESC LIMIT 1',
       [String(idCar)],
     );
@@ -34,15 +35,16 @@ export class RentService {
     return Number(2) > 3;
   }
 
-  checkCostRent(startDate: Date, endDate: Date): void {
+  checkCostRent(daysRent: number): number {
     //   return this.appService.getHello();
-    if (startDate.getDay() > 5) {
-      throw new ConflictException('Начало аренды в выходной!');
-    }
-    if (endDate.getDay() > 5) {
-      throw new ConflictException('Окончание аренды в выходной!');
-    }
-    let daysRent = endDate.getDay() - startDate.getDay();
+    // if (startDate.getDay() > 5) {
+    //   throw new ConflictException('Начало аренды в выходной!');
+    // }
+    // if (endDate.getDay() > 5) {
+    //   throw new ConflictException('Окончание аренды в выходной!');
+    // }
+    // let daysRent = endDate.getDay() - startDate.getDay();
+    // let daysRent = 30;
     if (daysRent > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
     }
@@ -76,6 +78,7 @@ export class RentService {
       costRent += daysRent * 1000;
       daysRent = 0;
     }
+    return costRent;
   }
 
   async rentCar(rent: RentDto): Promise<void> {
@@ -94,7 +97,7 @@ export class RentService {
     //   );
   }
 
-  report(): void {
+  async report(): Promise<ReportDto> {
     //   return this.appService.getHello();
     const i1 = DateTime.fromISO('1982-05-25T09:45'),
       i2 = DateTime.fromISO('1983-10-14T10:30');
@@ -103,6 +106,10 @@ export class RentService {
     console.log(i1.diff(i2, 'days').toObject()); //=> { hours: 12168.75 }
     // i2.diff(i1, ['months', 'days']).toObject(); //=> { months: 16, days: 19.03125 }
     // i2.diff(i1, ['months', 'days', 'hours']).toObject(); //=> { months: 16, days: 19, hours: 0.75 }
+    const { rows } = await this.db.query(
+      'SELECT car_id, COUNT(*) AS rentCount FROM car_rentals GROUP BY car_id',
+    );
+    return <ReportDto>(<unknown>rows);
   }
 }
 

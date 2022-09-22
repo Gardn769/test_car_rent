@@ -1,12 +1,11 @@
 import { env } from 'process';
 
 export const configurateDB = () => ({
-  //   type: 'mysql',
   database: {
     host: env.DB_HOST || 'localhost',
-    port: Number(env.DB_PORT) || 3306,
-    username: env.DB_USER || 'root',
-    password: env.DB_PASSWORD || 'root',
-    database: env.DB_NAME || 'ros_test',
+    port: Number(env.DB_PORT) || 5432,
+    user: env.DB_USER || 'postgres',
+    password: env.DB_PASSWORD || 'postgres',
+    // database: 'car_rent',
   },
 });
