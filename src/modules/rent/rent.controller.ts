@@ -10,9 +10,9 @@ export class RentController {
   constructor(private rentService: RentService) {}
 
   @ApiOperation({ summary: 'Проверка доступен ли автомобиль' })
-  @Get('checkCar')
-  checkCar(): void {
-    // return this.rentService.checkCar(2);
+  @Get('checkCar/:id')
+  checkCar(@Param('id') idCar: number): Promise<boolean> {
+    return this.rentService.checkCar(idCar);
   }
 
   @ApiOperation({
@@ -26,7 +26,7 @@ export class RentController {
   @ApiOperation({ summary: 'Создание сессии аренды автомобиля' })
   @Post('rentCar')
   rentCar(@Body() rent: RentDto): void {
-    // this.rentService.rentCar(rent);
+    this.rentService.rentCar(rent);
   }
 
   @ApiOperation({

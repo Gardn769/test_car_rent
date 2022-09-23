@@ -41,15 +41,19 @@ export class RentService {
 
   checkCostRent(days: RentDateDto): number {
     // return this.appService.getHello();
-    console.log(days.startDate);
+    const start_date: DateTime = DateTime.fromJSDate(days.startDate);
+    const end_date: DateTime = DateTime.fromJSDate(days.endDate);
+    console.log(start_date);
     // const startDate = Datetime.frodays.startDate;
-    if (days.startDate.getDay() > 5) {
+    if (start_date.toLocal().weekday > 5) {
       throw new ConflictException('Начало аренды в выходной!');
     }
-    if (days.endDate.getDay() > 5) {
+    if (end_date.toLocal().weekday > 5) {
       throw new ConflictException('Окончание аренды в выходной!');
     }
-    let daysRent = days.endDate.getDay() - days.startDate.getDay();
+    let daysRent = start_date.toLocal().day - end_date.toLocal().day;
+    console.log(daysRent);
+
     if (daysRent > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
     }
@@ -85,13 +89,16 @@ export class RentService {
     const start_date: DateTime = DateTime.fromJSDate(rent.startDate);
     const end_date: DateTime = DateTime.fromJSDate(rent.endDate);
 
-    if (rent.startDate.getDay() > 5) {
+    if (start_date.toLocal().weekday > 5) {
       throw new ConflictException('Начало аренды не может быть в выходной!');
     }
-    if (rent.endDate.getDay() > 5) {
+    if (end_date.toLocal().weekday > 5) {
       throw new ConflictException('Окончание аренды не может быть в выходной!');
     }
-    if (rent.endDate.getDay() - rent.startDate.getDay() > 30) {
+    const { days } = end_date.diff(start_date, 'days').toObject();
+    console.log(days);
+
+    if (end_date.diff(start_date, 'days').toObject() > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
     }
     await this.db.query(

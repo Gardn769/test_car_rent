@@ -3,7 +3,6 @@ import { configurateDB } from 'src/config/configurate-db';
 
 export async function migration(): Promise<void> {
   const conf = configurateDB().database;
-  console.log(conf);
 
   const client = new Client({ ...conf });
 
