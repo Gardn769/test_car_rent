@@ -21,5 +21,4 @@ export class DatabaseService {
   query(text: string, params?: any[]): Promise<QueryResult> {
     return this.pool.query(text, params);
   }
-
 }

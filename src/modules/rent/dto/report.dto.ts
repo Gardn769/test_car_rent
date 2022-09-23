@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ReportCarDto {
   @ApiProperty()
-  id!: number;
+  idCar!: number;
 
   @ApiProperty()
   percentWorkload!: number;

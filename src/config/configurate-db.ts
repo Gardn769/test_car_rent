@@ -6,6 +6,6 @@ export const configurateDB = () => ({
     port: Number(env.DB_PORT) || 5432,
     user: env.DB_USER || 'postgres',
     password: env.DB_PASSWORD || 'postgres',
-    // database: 'car_rent',
+    database: 'car_rent',
   },
 });

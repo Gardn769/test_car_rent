@@ -42,8 +42,8 @@ export class RentService {
   checkCostRent(days: RentDateDto): number {
     // return this.appService.getHello();
     console.log(days.startDate);
-    const startDate = Datetime.frodays.startDate;
-    if (startDate.getDay() > 5) {
+    // const startDate = Datetime.frodays.startDate;
+    if (days.startDate.getDay() > 5) {
       throw new ConflictException('Начало аренды в выходной!');
     }
     if (days.endDate.getDay() > 5) {
@@ -82,8 +82,8 @@ export class RentService {
   }
 
   async rentCar(rent: RentDto): Promise<void> {
-    const start_date: DateTime = DateTime.fromISO(rent.startDate);
-    const end_date: DateTime = DateTime.fromISO(rent.endDate);
+    const start_date: DateTime = DateTime.fromJSDate(rent.startDate);
+    const end_date: DateTime = DateTime.fromJSDate(rent.endDate);
 
     if (rent.startDate.getDay() > 5) {
       throw new ConflictException('Начало аренды не может быть в выходной!');
@@ -109,9 +109,16 @@ export class RentService {
     // );
     // return <ReportDto>(<unknown>rows);
     // let { rows }: { rows: CarRentalsInterface[] } = await this.db.query(
-    let { rows } = await this.db.query(
-      "SELECT * FROM car_rentals WHERE start_date >  CURRENT_DATE - 30",
+    const { rows } = await this.db.query(
+      'SELECT * FROM car_rent WHERE start_date >  CURRENT_DATE - 30',
     );
+    // const { rows } = await this.db.query(`
+    //   SELECT car_id, SUM(count_days)
+    //   as count
+    //   FROM CarRent
+    //   WHERE date_to BETWEEN '${lastDate}'::DATE + INTERVAL '-1 month' AND '${lastDate}'::DATE AND
+    //         date_from BETWEEN '${lastDate}'::DATE + INTERVAL '-1 month' AND '${lastDate}'::DATE
+    //   GROUP BY car_id`);
 
     const workload: any = {};
     for (const row of rows) {
@@ -128,7 +135,7 @@ export class RentService {
     const report: ReportCarDto[] = [];
     for (const reportKey in workload) {
       report.push({
-        id: +reportKey,
+        idCar: +reportKey,
         percentWorkload: +(workload[reportKey] / 30).toFixed(2),
       });
     }
