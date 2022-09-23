@@ -45,7 +45,7 @@ export class RentService {
     days++;
 
     if (days > 30) {
-      throw new ConflictException('аренду можно брать только на 30 дней');
+      throw new ConflictException('Аренду можно брать максимум на 30 дней');
     }
 
     const tariffs = this.config.getOrThrow('tariffs');
