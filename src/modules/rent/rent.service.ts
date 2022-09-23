@@ -15,16 +15,24 @@ export class RentService {
 
   async checkCar(idCar: number): Promise<boolean> {
     const { rows, rowCount } = await this.db.query(
-      'SELECT end_date FROM car_rent WHERE car_id = $1 ORDER BY end_date DESC LIMIT 1',
+      'SELECT end_date FROM car_rent WHERE car_id = $1 AND CURRENT_DATE BETWEEN start_date AND end_date ORDER BY end_date DESC LIMIT 1',
       [String(idCar)],
     );
+    if (!rowCount) {
+      return true;
+    }
 
-    return Number(2) > 3;
+    const end_date: DateTime = DateTime.fromJSDate(rows[0].end_date);
+    const { days } = DateTime.now().diff(end_date, 'days').toObject();
+    return Number(days) > 3;
   }
 
   checkCostRent(dateRent: RentDateDto): number {
-    const start_date: DateTime = DateTime.fromISO(String(dateRent.startDate));
-    const end_date: DateTime = DateTime.fromISO(String(dateRent.endDate));
+    const start_date: DateTime = DateTime.fromJSDate(dateRent.startDate);
+    console.log(dateRent.startDate);
+    console.log(start_date);
+
+    const end_date: DateTime = DateTime.fromJSDate(dateRent.endDate);
     if (start_date.toLocal().weekday > 5) {
       throw new ConflictException('Начало аренды не может быть в выходной!');
     }
@@ -33,6 +41,7 @@ export class RentService {
     }
 
     let { days } = end_date.diff(start_date, 'days').toObject();
+    console.log(days);
 
     if (days > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
@@ -89,17 +98,10 @@ export class RentService {
   }
 
   async report(): Promise<ReportDto> {
-    // const i1 = DateTime.fromISO('1982-05-25T09:45');
-    // const i2 = DateTime.fromISO('1983-10-14T10:30');
-    // console.log(i1.diff(i2, 'days').toObject());
-    // const { rows } = await this.db.query(
-    //   'SELECT car_id, COUNT(*) AS rentCount FROM car_rentals GROUP BY car_id',
-    // );
-    // return <ReportDto>(<unknown>rows);
-    // let { rows }: { rows: CarRentalsInterface[] } = await this.db.query(
     const { rows } = await this.db.query(
-      'SELECT * FROM car_rent WHERE start_date >  CURRENT_DATE - 30',
+      'SELECT * FROM car_rent WHERE start_date >  CURRENT_DATE - 30 AND end_date < CURRENT_DATE - 30',
     );
+    // console.log(rows);
     // const { rows } = await this.db.query(`
     //   SELECT car_id, SUM(count_days)
     //   as count
@@ -110,10 +112,11 @@ export class RentService {
 
     const workload: any = {};
     for (const row of rows) {
-      const start_date: DateTime = DateTime.fromISO(row.start_date);
-      const end_date: DateTime = DateTime.fromISO(row.end_date);
+      const start_date: DateTime = DateTime.fromJSDate(row.start_date);
+      const end_date: DateTime = DateTime.fromJSDate(row.end_date);
 
       const { days } = end_date.diff(start_date, 'days').toObject();
+
       if (!workload[row.car_id]) {
         workload[row.car_id] = 0;
       }
