@@ -25,8 +25,8 @@ export class RentController {
 
   @ApiOperation({ summary: 'Создание сессии аренды автомобиля' })
   @Post('rentCar')
-  rentCar(@Body() rent: RentDto): void {
-    this.rentService.rentCar(rent);
+  async rentCar(@Body() rent: RentDto): Promise<void> {
+    await this.rentService.rentCar(rent);
   }
 
   @ApiOperation({

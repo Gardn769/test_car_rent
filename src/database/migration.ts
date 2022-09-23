@@ -6,8 +6,6 @@ export async function migration(): Promise<void> {
 
   const client = new Client({ ...conf });
 
-  console.log(client);
-
   await client.connect();
 
   await client.query(

@@ -18,89 +18,70 @@ export class RentService {
       'SELECT end_date FROM car_rent WHERE car_id = $1 ORDER BY end_date DESC LIMIT 1',
       [String(idCar)],
     );
-    // let dt = DateTime.now();
-    // // const end_date: DateTime = DateTime.fromISO(rows[0].end_date)
-    // // const { days } = end_date.diffNow('day').toObject()
 
-    // const end_date: DateTime = dt.plus({ days: 20 });
-    // console.log(end_date.diffNow('day').toObject());
-
-    // console.log(dt.day);
-    // // dt.plus(Duration.fromObject({ days: 20, hours: 2, minutes: 7 }));
-    // dt = dt.plus({ days: 1 });
-    // console.log(dt.plus({ days: 1 }));
-    // console.log(dt.day);
-    // // return DateTime.now().toString();
-
-    // const end_date: DateTime = DateTime.fromISO(rows[0].end_date);
-    // const { days } = end_date.diffNow('day').toObject();
-
-    // return Number(days) > 3;
     return Number(2) > 3;
   }
 
-  checkCostRent(days: RentDateDto): number {
-    // return this.appService.getHello();
-    const start_date: DateTime = DateTime.fromJSDate(days.startDate);
-    const end_date: DateTime = DateTime.fromJSDate(days.endDate);
-    console.log(start_date);
-    // const startDate = Datetime.frodays.startDate;
-    if (start_date.toLocal().weekday > 5) {
-      throw new ConflictException('Начало аренды в выходной!');
-    }
-    if (end_date.toLocal().weekday > 5) {
-      throw new ConflictException('Окончание аренды в выходной!');
-    }
-    let daysRent = start_date.toLocal().day - end_date.toLocal().day;
-    console.log(daysRent);
-
-    if (daysRent > 30) {
-      throw new ConflictException('аренду можно брать только на 30 дней');
-    }
-    const tariffs = this.config.getOrThrow('tariffs');
-    if (daysRent > 17) {
-      daysRent -= 17;
-      return (
-        tariffs.baseRate * 4 +
-        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * 5 +
-        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 2) * 8 +
-        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 3) * daysRent
-      );
-    }
-    if (daysRent > 10) {
-      daysRent -= 9;
-      return (
-        tariffs.baseRate * 4 +
-        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * 5 +
-        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 2) * daysRent
-      );
-    }
-    if (daysRent > 5) {
-      daysRent -= 4;
-      return (
-        tariffs.baseRate * 4 +
-        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * daysRent
-      );
-    }
-    return tariffs.baseRate * daysRent;
-  }
-
-  async rentCar(rent: RentDto): Promise<void> {
-    const start_date: DateTime = DateTime.fromJSDate(rent.startDate);
-    const end_date: DateTime = DateTime.fromJSDate(rent.endDate);
-
+  checkCostRent(dateRent: RentDateDto): number {
+    const start_date: DateTime = DateTime.fromISO(String(dateRent.startDate));
+    const end_date: DateTime = DateTime.fromISO(String(dateRent.endDate));
     if (start_date.toLocal().weekday > 5) {
       throw new ConflictException('Начало аренды не может быть в выходной!');
     }
     if (end_date.toLocal().weekday > 5) {
       throw new ConflictException('Окончание аренды не может быть в выходной!');
     }
-    const { days } = end_date.diff(start_date, 'days').toObject();
-    console.log(days);
 
-    if (end_date.diff(start_date, 'days').toObject() > 30) {
+    let { days } = end_date.diff(start_date, 'days').toObject();
+
+    if (days > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
     }
+
+    const tariffs = this.config.getOrThrow('tariffs');
+    if (days > 17) {
+      days -= 17;
+      return (
+        tariffs.baseRate * 4 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * 5 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 2) * 8 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 3) * days
+      );
+    }
+    if (days > 10) {
+      days -= 9;
+      return (
+        tariffs.baseRate * 4 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * 5 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount * 2) * days
+      );
+    }
+    if (days > 5) {
+      days -= 4;
+      return (
+        tariffs.baseRate * 4 +
+        (tariffs.baseRate - tariffs.baseRate * tariffs.discount) * days
+      );
+    }
+    return tariffs.baseRate * days;
+  }
+
+  async rentCar(rent: RentDto): Promise<void> {
+    const start_date: DateTime = DateTime.fromISO(String(rent.startDate));
+    const end_date: DateTime = DateTime.fromISO(String(rent.endDate));
+    if (start_date.toLocal().weekday > 5) {
+      throw new ConflictException('Начало аренды не может быть в выходной!');
+    }
+    if (end_date.toLocal().weekday > 5) {
+      throw new ConflictException('Окончание аренды не может быть в выходной!');
+    }
+
+    const { days } = end_date.diff(start_date, 'days').toObject();
+
+    if (days > 30) {
+      throw new ConflictException('аренду можно брать только на 30 дней');
+    }
+
     await this.db.query(
       'INSERT INTO car_rent (car_id, client_id, start_date, end_date) VALUES ($1, $2, $3, $4)',
       [rent.idCar, rent.idClient, rent.startDate, rent.endDate],
@@ -129,8 +110,8 @@ export class RentService {
 
     const workload: any = {};
     for (const row of rows) {
-      const start_date: DateTime = DateTime.fromJSDate(row.start_date);
-      const end_date: DateTime = DateTime.fromJSDate(row.end_date);
+      const start_date: DateTime = DateTime.fromISO(row.start_date);
+      const end_date: DateTime = DateTime.fromISO(row.end_date);
 
       const { days } = end_date.diff(start_date, 'days').toObject();
       if (!workload[row.car_id]) {
