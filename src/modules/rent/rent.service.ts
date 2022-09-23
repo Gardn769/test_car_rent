@@ -86,10 +86,10 @@ export class RentService {
     const end_date: DateTime = DateTime.fromISO(rent.endDate);
 
     if (rent.startDate.getDay() > 5) {
-      throw new ConflictException('Начало аренды в выходной!');
+      throw new ConflictException('Начало аренды не может быть в выходной!');
     }
     if (rent.endDate.getDay() > 5) {
-      throw new ConflictException('Окончание аренды в выходной!');
+      throw new ConflictException('Окончание аренды не может быть в выходной!');
     }
     if (rent.endDate.getDay() - rent.startDate.getDay() > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
@@ -108,8 +108,9 @@ export class RentService {
     //   'SELECT car_id, COUNT(*) AS rentCount FROM car_rentals GROUP BY car_id',
     // );
     // return <ReportDto>(<unknown>rows);
-    const { rows } = await this.db.query(
-      'SELECT * FROM car_rentals WHERE start_date >  CURRENT_DATE - 30',
+    // let { rows }: { rows: CarRentalsInterface[] } = await this.db.query(
+    let { rows } = await this.db.query(
+      "SELECT * FROM car_rentals WHERE start_date >  CURRENT_DATE - 30",
     );
 
     const workload: any = {};
@@ -126,10 +127,10 @@ export class RentService {
 
     const report: ReportCarDto[] = [];
     for (const reportKey in workload) {
-      // report.push({
-      //   // carId: +reportKey,
-      //   percentWorkload: workload[reportKey] / 30,
-      // });
+      report.push({
+        id: +reportKey,
+        percentWorkload: +(workload[reportKey] / 30).toFixed(2),
+      });
     }
 
     return <ReportDto>{ report };

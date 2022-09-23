@@ -10,3 +10,14 @@ services:
       POSTGRES_DB:  ${POSTGRES_DB:-car_rent}
     ports:
       - "5432:5432"
+  car-rent:
+    container_name: car-rent
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    restart: always
