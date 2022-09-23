@@ -2,18 +2,16 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { migration } from './database/migration';
 
 async function bootstrap() {
   const Port = 3000;
-  await migration();
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
-      // whitelist: true,
+      whitelist: true,
       transform: true,
-      // forbidNonWhitelisted: true,
+      forbidNonWhitelisted: true,
     }),
   );
 

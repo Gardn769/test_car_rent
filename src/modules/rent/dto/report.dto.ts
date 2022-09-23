@@ -14,4 +14,7 @@ export class ReportCarDto {
 export class ReportDto {
   @ApiProperty()
   report!: ReportCarDto[];
+
+  @ApiProperty()
+  averegeLoad!: number;
 }

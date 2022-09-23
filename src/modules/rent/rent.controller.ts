@@ -10,9 +10,9 @@ export class RentController {
   constructor(private rentService: RentService) {}
 
   @ApiOperation({ summary: 'Проверка доступен ли автомобиль' })
-  @Get('checkCar/:id')
-  checkCar(@Param('id') idCar: number): Promise<boolean> {
-    return this.rentService.checkCar(idCar);
+  @Post('checkCar')
+  checkCar(@Body() rent: RentDto): Promise<boolean> {
+    return this.rentService.checkCar(rent);
   }
 
   @ApiOperation({
@@ -25,16 +25,16 @@ export class RentController {
 
   @ApiOperation({ summary: 'Создание сессии аренды автомобиля' })
   @Post('rentCar')
-  async rentCar(@Body() rent: RentDto): Promise<void> {
-    await this.rentService.rentCar(rent);
+  async rentCar(@Body() rent: RentDto): Promise<boolean> {
+    return await this.rentService.rentCar(rent);
   }
 
   @ApiOperation({
     summary:
       'Формируется отчёт средней загрузки автомобилей за месяц, по каждому авто и итогом по всем автомобилям. ',
   })
-  @Get('report')
-  async report(): Promise<ReportDto> {
-    return await this.rentService.report();
+  @Post('report')
+  async report(@Body() rent: RentDateDto): Promise<ReportDto> {
+    return await this.rentService.report(rent);
   }
 }

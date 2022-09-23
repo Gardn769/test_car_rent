@@ -13,18 +13,18 @@ export class RentService {
 
   constructor(private db: DatabaseService, private config: ConfigService) {}
 
-  async checkCar(idCar: number): Promise<boolean> {
+  async checkCar(rent: RentDto): Promise<boolean> {
     const { rows, rowCount } = await this.db.query(
-      'SELECT end_date FROM car_rent WHERE car_id = $1 AND CURRENT_DATE BETWEEN start_date AND end_date ORDER BY end_date DESC LIMIT 1',
-      [String(idCar)],
+      'SELECT end_date FROM car_rent WHERE car_id = $1 AND start_date <= $2 AND end_date >= $3 ORDER BY end_date DESC LIMIT 1',
+      [String(rent.idCar), String(rent.endDate), String(rent.startDate)],
     );
     if (!rowCount) {
       return true;
     }
 
     const end_date: DateTime = DateTime.fromJSDate(rows[0].end_date);
-    const { days } = DateTime.now().diff(end_date, 'days').toObject();
-    return Number(days) > 3;
+    const days = DateTime.now().diff(end_date, 'days').toObject().days;
+    return days > 3;
   }
 
   checkCostRent(dateRent: RentDateDto): number {
@@ -42,6 +42,7 @@ export class RentService {
 
     let { days } = end_date.diff(start_date, 'days').toObject();
     console.log(days);
+    days++;
 
     if (days > 30) {
       throw new ConflictException('аренду можно брать только на 30 дней');
@@ -75,7 +76,7 @@ export class RentService {
     return tariffs.baseRate * days;
   }
 
-  async rentCar(rent: RentDto): Promise<void> {
+  async rentCar(rent: RentDto): Promise<boolean> {
     const start_date: DateTime = DateTime.fromISO(String(rent.startDate));
     const end_date: DateTime = DateTime.fromISO(String(rent.endDate));
     if (start_date.toLocal().weekday > 5) {
@@ -95,20 +96,20 @@ export class RentService {
       'INSERT INTO car_rent (car_id, client_id, start_date, end_date) VALUES ($1, $2, $3, $4)',
       [rent.idCar, rent.idClient, rent.startDate, rent.endDate],
     );
+    return true;
   }
 
-  async report(): Promise<ReportDto> {
+  async report(rent: RentDateDto): Promise<ReportDto> {
+    //     SELECT * FROM car_rent
+    // where start_date <= '2022-09-23' and end_date >= '2022-09-14'
     const { rows } = await this.db.query(
-      'SELECT * FROM car_rent WHERE start_date >  CURRENT_DATE - 30 AND end_date < CURRENT_DATE - 30',
+      'SELECT * FROM car_rent WHERE start_date <= $1  AND end_date >=  $2',
+      [rent.endDate, rent.startDate],
     );
-    // console.log(rows);
-    // const { rows } = await this.db.query(`
-    //   SELECT car_id, SUM(count_days)
-    //   as count
-    //   FROM CarRent
-    //   WHERE date_to BETWEEN '${lastDate}'::DATE + INTERVAL '-1 month' AND '${lastDate}'::DATE AND
-    //         date_from BETWEEN '${lastDate}'::DATE + INTERVAL '-1 month' AND '${lastDate}'::DATE
-    //   GROUP BY car_id`);
+    const start_pereiod: DateTime = DateTime.fromJSDate(rent.startDate);
+    const end_pereiod: DateTime = DateTime.fromJSDate(rent.endDate);
+
+    console.log(rows);
 
     const workload: any = {};
     for (const row of rows) {
@@ -123,14 +124,21 @@ export class RentService {
       workload[row.car_id] += Number(days);
     }
 
+    const daysPereiod = end_pereiod.diff(start_pereiod, 'days').toObject().days;
     const report: ReportCarDto[] = [];
     for (const reportKey in workload) {
       report.push({
         idCar: +reportKey,
-        percentWorkload: +(workload[reportKey] / 30).toFixed(2),
+        percentWorkload: +(workload[reportKey] / daysPereiod).toFixed(2),
       });
     }
 
-    return <ReportDto>{ report };
+    let averegeLoad = 0;
+    for (const i in report) {
+      averegeLoad += report[i].percentWorkload;
+    }
+    averegeLoad /= report.length;
+
+    return <ReportDto>{ report, averegeLoad };
   }
 }
