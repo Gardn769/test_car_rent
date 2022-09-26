@@ -3,14 +3,14 @@ import { Type } from 'class-transformer';
 import { IsDate, IsDateString, IsNumber } from 'class-validator';
 export class RentDateDto {
   @ApiProperty()
-  @Type(() => Date)
-  @IsDate()
-  startDate!: Date;
+  @Type()
+  @IsDateString()
+  startDate!: string;
 
   @ApiProperty()
-  @Type(() => Date)
-  @IsDate()
-  endDate!: Date;
+  @Type()
+  @IsDateString()
+  endDate!: string;
 }
 
 export class RentDto {
@@ -26,11 +26,11 @@ export class RentDto {
   @IsNumber()
   costCarRent!: number;
 
-  @ApiProperty({ type: Date })
+  @ApiProperty()
   @IsDateString()
-  startDate!: Date;
+  startDate!: string;
 
-  @ApiProperty({ type: Date })
+  @ApiProperty()
   @IsDateString()
-  endDate!: Date;
+  endDate!: string;
 }

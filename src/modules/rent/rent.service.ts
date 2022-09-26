@@ -14,10 +14,15 @@ export class RentService {
   constructor(private db: DatabaseService, private config: ConfigService) {}
 
   async checkCar(rent: RentDto): Promise<boolean> {
+    console.log(rent);
+
     const { rows, rowCount } = await this.db.query(
       'SELECT end_date FROM car_rent WHERE car_id = $1 AND start_date <= $2 AND end_date >= $3 ORDER BY end_date DESC LIMIT 1',
       [String(rent.idCar), String(rent.endDate), String(rent.startDate)],
     );
+    console.log(rows);
+    console.log(rowCount);
+
     if (!rowCount) {
       return true;
     }
@@ -28,11 +33,11 @@ export class RentService {
   }
 
   checkCostRent(dateRent: RentDateDto): number {
-    const start_date: DateTime = DateTime.fromJSDate(dateRent.startDate);
+    const start_date: DateTime = DateTime.fromISO(dateRent.startDate);
     console.log(dateRent.startDate);
     console.log(start_date);
 
-    const end_date: DateTime = DateTime.fromJSDate(dateRent.endDate);
+    const end_date: DateTime = DateTime.fromISO(dateRent.endDate);
     if (start_date.toLocal().weekday > 5) {
       throw new ConflictException('Начало аренды не может быть в выходной!');
     }
@@ -49,6 +54,9 @@ export class RentService {
     }
 
     const tariffs = this.config.getOrThrow('tariffs');
+    console.log(tariffs);
+    console.log(tariffs.discount);
+
     if (days > 17) {
       days -= 17;
       return (
@@ -106,8 +114,8 @@ export class RentService {
       'SELECT * FROM car_rent WHERE start_date <= $1  AND end_date >=  $2',
       [rent.endDate, rent.startDate],
     );
-    const start_pereiod: DateTime = DateTime.fromJSDate(rent.startDate);
-    const end_pereiod: DateTime = DateTime.fromJSDate(rent.endDate);
+    const start_pereiod: DateTime = DateTime.fromISO(rent.startDate);
+    const end_pereiod: DateTime = DateTime.fromISO(rent.endDate);
 
     console.log(rows);
 
@@ -132,12 +140,15 @@ export class RentService {
         percentWorkload: +(workload[reportKey] / daysPereiod).toFixed(2),
       });
     }
+    console.log(report);
 
     let averegeLoad = 0;
     for (const i in report) {
       averegeLoad += report[i].percentWorkload;
     }
-    averegeLoad /= report.length;
+    if (report.length !== 0) {
+      averegeLoad /= report.length;
+    }
 
     return <ReportDto>{ report, averegeLoad };
   }
